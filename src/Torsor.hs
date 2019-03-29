@@ -1,10 +1,10 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
 
 {- | The typeclasses provides in this module are equivalent
      to three of the typeclasses from the @vector-space@
      package. This package uses MPTCs with functional dependencies
-     instead of type families in order to improved error
+     instead of type families in order to give improved error
      messages.
 -}
 
@@ -14,8 +14,8 @@ module Torsor
   , Scaling(..)
   ) where
 
-import Data.Int
-import Data.Word
+import           Data.Int
+import           Data.Word
 
 class Additive v where
   zero :: v
