@@ -17,7 +17,7 @@ tests = testGroup "Tests" [differenceableTests]
 
 differenceableTests :: TestTree
 -- differenceableTests = testGroup "Diffable" [intTests, floatTests, doubleTests, sumTests, mapTests, intMapTests, sequenceTests, maybeTests]
-differenceableTests = testGroup "Torsor" [intTests, mapTests]
+differenceableTests = testGroup "Torsor" [intTests, mapTests, intMapTests]
 
 intTests :: TestTree
 intTests =
@@ -63,13 +63,13 @@ mapTests =
       QC.testProperty "Path Law" $ \old middle new -> add (difference middle old <> difference new middle) old == (new :: M.Map Int Int)
     ]
 
--- intMapTests :: TestTree
--- intMapTests =
---   testGroup
---     "IntMaps"
---     [ QC.testProperty "Add law" $ \new old -> add old (difference new old) == (new :: IM.IntMap (Sum Int)),
---       QC.testProperty "Path Law" $ \old middle new -> add old (difference middle old <> difference new middle) == (new :: IM.IntMap (Sum Int))
---     ]
+intMapTests :: TestTree
+intMapTests =
+  testGroup
+    "IntMaps"
+    [ QC.testProperty "Add law" $ \new old -> add (difference new old) old == (new :: IM.IntMap Int),
+      QC.testProperty "Path Law" $ \old middle new -> add (difference middle old <> difference new middle) old == (new :: IM.IntMap Int)
+    ]
 
 -- sequenceTests :: TestTree
 -- sequenceTests =

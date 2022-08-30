@@ -7,6 +7,7 @@ module Torsor.Collections where
 
 import Data.Foldable (Foldable (fold), foldl')
 import Data.Functor.Identity (Identity (..))
+import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import qualified Data.Map.Merge.Strict as M
 import qualified Data.Sequence as S
@@ -155,5 +156,17 @@ instance (Ord a) => DiffableContainer (M.Map a) ((,) a) where
   zipper f = M.merge M.dropMissing M.dropMissing (M.zipWithMatched (const f))
 
 instance (Ord a, Torsor value diff) => Torsor (M.Map a value) (ContainerDiff (M.Map a) ((,) a) value diff) where
+  difference = diffDiffableContainer
+  add = flip moveDiffableContainer
+
+instance DiffableContainer IM.IntMap ((,) Int) where
+  gains new = IM.foldMapWithKey (curry pure) . IM.difference new
+  losses new = IM.foldMapWithKey (curry pure) . flip IM.difference new
+  remained = IM.intersectionWith (,)
+  patchIn (k, v) = IM.insert k v
+  patchOut (k, _) = IM.delete k
+  zipper f = IM.mergeWithKey (\_ a -> Just . f a) (const mempty) (const mempty)
+
+instance (Torsor value diff) => Torsor (IM.IntMap value) (ContainerDiff IM.IntMap ((,) Int) value diff) where
   difference = diffDiffableContainer
   add = flip moveDiffableContainer
