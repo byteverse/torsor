@@ -127,8 +127,8 @@ diffDiffableContainer new old =
          in pure $ Shift s
    in lost <> shift <> gain
 
-moveDiffableContainer :: (DiffableContainer f g, Torsor a b) => f a -> ContainerDiff f g a b -> f a
-moveDiffableContainer = foldl' go
+moveDiffableContainer :: (DiffableContainer f g, Torsor a b) => ContainerDiff f g a b -> f a -> f a
+moveDiffableContainer = flip (foldl' go)
   where
     go x (Add n) = patchIn n x
     go x (Drop n) = patchOut n x
@@ -157,7 +157,7 @@ instance (Ord a) => DiffableContainer (M.Map a) ((,) a) where
 
 instance (Ord a, Torsor value diff) => Torsor (M.Map a value) (ContainerDiff (M.Map a) ((,) a) value diff) where
   difference = diffDiffableContainer
-  add = flip moveDiffableContainer
+  add = moveDiffableContainer
 
 instance DiffableContainer IM.IntMap ((,) Int) where
   gains new = IM.foldMapWithKey (curry pure) . IM.difference new
@@ -169,4 +169,4 @@ instance DiffableContainer IM.IntMap ((,) Int) where
 
 instance (Torsor value diff) => Torsor (IM.IntMap value) (ContainerDiff IM.IntMap ((,) Int) value diff) where
   difference = diffDiffableContainer
-  add = flip moveDiffableContainer
+  add = moveDiffableContainer
