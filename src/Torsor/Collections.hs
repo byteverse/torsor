@@ -1,12 +1,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Torsor.Collections where
 
 import Data.Foldable (Foldable (fold), foldl')
 import Data.Functor.Identity (Identity (..))
 import qualified Data.Map as M
+import qualified Data.Map.Merge.Strict as M
 import qualified Data.Sequence as S
 import Torsor
 
@@ -133,3 +135,25 @@ moveDiffableContainer = foldl' go
 
 -- | The difference for a container.
 type ContainerDiff f g value diff = S.Seq (Diff (g value) (f diff))
+
+instance (Functor f, Additive diff) => Additive (ContainerDiff f g value diff) where
+  zero = S.empty
+  invert = S.reverse . fmap go where
+    go (Add v) = Drop v
+    go (Drop v) = Add v
+    go (Shift v) = Shift $ fmap invert v
+  plus = (<>)
+  minus x y = x `plus` invert y
+
+
+instance (Ord a) => DiffableContainer (M.Map a) ((,) a) where
+  gains new = M.foldMapWithKey (curry pure) . M.difference new
+  losses new = M.foldMapWithKey (curry pure) . flip M.difference new
+  remained = M.intersectionWith (,)
+  patchIn (k, v) = M.insert k v
+  patchOut (k, _) = M.delete k
+  zipper f = M.merge M.dropMissing M.dropMissing (M.zipWithMatched (const f))
+
+instance (Ord a, Torsor value diff) => Torsor (M.Map a value) (ContainerDiff (M.Map a) ((,) a) value diff) where
+  difference = diffDiffableContainer
+  add = flip moveDiffableContainer
