@@ -3,7 +3,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Torsor.Collections (DiffableContainer(..), foldDiff, foldDiffM, ContainerDiff, differenceDiffableContainer, addDiffableContainer) where
+module Torsor.Containers (DiffableContainer(..), foldDiff, foldDiffM, ContainerDiff, differenceDiffableContainer, addDiffableContainer) where
 
 import Data.Foldable (Foldable (fold), foldl')
 import Data.Functor.Identity (Identity (..))

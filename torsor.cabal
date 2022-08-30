@@ -16,7 +16,7 @@ cabal-version: >=1.10
 library
   hs-source-dirs: src
   exposed-modules: Torsor,
-                   Torsor.Collections
+                   Torsor.Containers
   build-depends: base >= 4.7 && < 5
                , containers
   default-language: Haskell2010

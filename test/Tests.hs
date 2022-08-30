@@ -5,7 +5,7 @@ import qualified Data.Map as M
 import Data.Monoid
 import qualified Data.Sequence as S
 import Torsor
-import Torsor.Collections
+import Torsor.Containers
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
 
