@@ -3,7 +3,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Torsor.Collections where
+module Torsor.Collections (DiffableContainer(..), foldDiff, foldDiffM, ContainerDiff, differenceDiffableContainer, addDiffableContainer) where
 
 import Data.Foldable (Foldable (fold), foldl')
 import Data.Functor.Identity (Identity (..))
@@ -28,11 +28,11 @@ instance Additive d => Additive [Diff v d] where
 
 -- | A typeclass for diffing containers.  This exists entirely to
 -- simplify creating Torsor instances by eliminating boilerplate
--- between containers.  The `f` type function is our container
--- (e.g. `Map String`).  The `g` type function annotates the values
--- which are added and removed from the container.  For example, on
--- the `IntMap`, `g` is `(Int,)`, as each value added or removed needs
--- to be annotated with its key.
+-- between containers.  The @f@ type function is our container
+-- (e.g. @`Map` `String`@).  The @g@ type function annotates the
+-- values which are added and removed from the container.  For
+-- example, on the `IntMap`, @g@ is @(`Int`,)@, as each value added or
+-- removed needs to be annotated with its key.
 class DiffableContainer f g | f -> g where
   -- | The elements which have been added to the container
   gains ::
@@ -81,8 +81,14 @@ class DiffableContainer f g | f -> g where
     f a
 
   -- | Zip a function over two containers, acting on values present in
-  -- both containers.  Note that it is a zip and *not* the applicative
-  -- instance.
+  -- both containers.  Note that it is a zip and __not__ the applicative
+  -- instance.  For example
+  --
+  -- > zipper (+) [1, 2] [3, 4] == [4, 6]
+  --
+  -- while
+  --
+  -- > (+) <$> [1, 2] <*> [3, 4] == [4, 5, 5, 6]
   zipper :: (a -> b -> c) -> f a -> f b -> f c
 
 
@@ -118,8 +124,11 @@ foldDiff ::
   w
 foldDiff add drp shft = runIdentity . foldDiffM (Identity . add) (Identity . drp) (Identity . shft)
 
-diffDiffableContainer :: (Functor f, Foldable f, DiffableContainer f g, Torsor a b) => f a -> f a -> ContainerDiff f g a b
-diffDiffableContainer new old =
+-- | For any @`DiffableContainer` f g@, then you can use this function
+-- as the `difference` function when implementing
+-- @`Torsor` (f a) (`ContainerDiff` f g a b)@
+differenceDiffableContainer :: (Functor f, Foldable f, DiffableContainer f g, Torsor a b) => f a -> f a -> ContainerDiff f g a b
+differenceDiffableContainer new old =
   let gain = Add <$> gains new old
       lost = Drop <$> losses new old
       shift =
@@ -127,14 +136,21 @@ diffDiffableContainer new old =
          in pure $ Shift s
    in lost <> shift <> gain
 
-moveDiffableContainer :: (DiffableContainer f g, Torsor a b) => ContainerDiff f g a b -> f a -> f a
-moveDiffableContainer = flip (foldl' go)
+-- | For any @`DiffableContainer` f g@, then you can use this function
+-- as the `add` function when implementing
+-- @`Torsor` (f a) (`ContainerDiff` f g a b)@
+addDiffableContainer :: (DiffableContainer f g, Torsor a b) => ContainerDiff f g a b -> f a -> f a
+addDiffableContainer = flip (foldl' go)
   where
     go x (Add n) = patchIn n x
     go x (Drop n) = patchOut n x
     go x (Shift d) = zipper (flip add) x d
 
--- | The difference for a container.
+-- | The difference for a container.  The only operations that you
+-- should perform on this type are `add`, `foldDiff`, and `foldDiffM`.
+-- I've intentionally made other operations difficult and inconvenient
+-- to discourage other operations.  This enables us to swap out the
+-- underlying implementation in the future for a more performant type.
 type ContainerDiff f g value diff = S.Seq (Diff (g value) (f diff))
 
 instance (Functor f, Additive diff) => Additive (ContainerDiff f g value diff) where
@@ -156,8 +172,8 @@ instance (Ord a) => DiffableContainer (M.Map a) ((,) a) where
   zipper f = M.merge M.dropMissing M.dropMissing (M.zipWithMatched (const f))
 
 instance (Ord a, Torsor value diff) => Torsor (M.Map a value) (ContainerDiff (M.Map a) ((,) a) value diff) where
-  difference = diffDiffableContainer
-  add = moveDiffableContainer
+  difference = differenceDiffableContainer
+  add = addDiffableContainer
 
 instance DiffableContainer IM.IntMap ((,) Int) where
   gains new = IM.foldMapWithKey (curry pure) . IM.difference new
@@ -168,8 +184,8 @@ instance DiffableContainer IM.IntMap ((,) Int) where
   zipper f = IM.mergeWithKey (\_ a -> Just . f a) (const mempty) (const mempty)
 
 instance (Torsor value diff) => Torsor (IM.IntMap value) (ContainerDiff IM.IntMap ((,) Int) value diff) where
-  difference = diffDiffableContainer
-  add = moveDiffableContainer
+  difference = differenceDiffableContainer
+  add = addDiffableContainer
 
 instance DiffableContainer S.Seq Identity where
   gains new old = foldMap (pure . Identity) $ S.drop (S.length old) new
@@ -182,8 +198,8 @@ instance DiffableContainer S.Seq Identity where
   zipper = S.zipWith
 
 instance (Torsor value diff) => Torsor (S.Seq value) (ContainerDiff S.Seq Identity value diff) where
-  difference = diffDiffableContainer
-  add = moveDiffableContainer
+  difference = differenceDiffableContainer
+  add = addDiffableContainer
 
 instance DiffableContainer Maybe Identity where
   gains (Just x) Nothing = pure $ Identity x
@@ -197,5 +213,5 @@ instance DiffableContainer Maybe Identity where
   zipper f a b = f <$> a <*> b
 
 instance (Torsor value diff) => Torsor (Maybe value) (ContainerDiff Maybe Identity value diff) where
-  difference = diffDiffableContainer
-  add = moveDiffableContainer
+  difference = differenceDiffableContainer
+  add = addDiffableContainer
