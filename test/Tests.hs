@@ -16,8 +16,7 @@ tests :: TestTree
 tests = testGroup "Tests" [differenceableTests]
 
 differenceableTests :: TestTree
--- differenceableTests = testGroup "Diffable" [intTests, floatTests, doubleTests, sumTests, mapTests, intMapTests, sequenceTests, maybeTests]
-differenceableTests = testGroup "Torsor" [intTests, mapTests, intMapTests, sequenceTests]
+differenceableTests = testGroup "Torsor" [intTests, mapTests, intMapTests, sequenceTests, maybeTests]
 
 intTests :: TestTree
 intTests =
@@ -52,13 +51,13 @@ sequenceTests =
       QC.testProperty "Path Law" $ \old middle new -> add (difference middle old <> difference new middle) old == (new :: S.Seq Int)
     ]
 
--- maybeTests :: TestTree
--- maybeTests =
---   testGroup
---     "Maybe"
---     [ QC.testProperty "Add law" $ \new old -> add old (difference new old) == (new :: Maybe (Sum Int)),
---       QC.testProperty "Path Law" $ \old middle new -> add old (difference middle old <> difference new middle) == (new :: Maybe (Sum Int))
---     ]
+maybeTests :: TestTree
+maybeTests =
+  testGroup
+    "Maybe"
+    [ QC.testProperty "Add law" $ \new old -> add (difference new old) old == (new :: Maybe Int),
+      QC.testProperty "Path Law" $ \old middle new -> add (difference middle old <> difference new middle) old == (new :: Maybe Int)
+    ]
 
 eqDouble :: (Ord a, Fractional a) => a -> a -> Bool
 eqDouble 0 b = b == 0

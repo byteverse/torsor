@@ -184,3 +184,18 @@ instance DiffableContainer S.Seq Identity where
 instance (Torsor value diff) => Torsor (S.Seq value) (ContainerDiff S.Seq Identity value diff) where
   difference = diffDiffableContainer
   add = moveDiffableContainer
+
+instance DiffableContainer Maybe Identity where
+  gains (Just x) Nothing = pure $ Identity x
+  gains _ _ = mempty
+  losses Nothing (Just x) = pure $ Identity x
+  losses _ _ = mempty
+  remained (Just x) (Just y) = Just (x, y)
+  remained _ _ = Nothing
+  patchIn (Identity x) _ = Just x
+  patchOut _ _ = Nothing
+  zipper f a b = f <$> a <*> b
+
+instance (Torsor value diff) => Torsor (Maybe value) (ContainerDiff Maybe Identity value diff) where
+  difference = diffDiffableContainer
+  add = moveDiffableContainer
