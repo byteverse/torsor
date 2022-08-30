@@ -24,3 +24,22 @@ library
 source-repository head
   type: git
   location: https://github.com/andrewthad/torsor
+
+
+test-suite test
+    -- The interface type and version of the test suite.
+    type:             exitcode-stdio-1.0
+
+    -- Directories containing source files.
+    hs-source-dirs:   test
+
+    -- The entrypoint to the test suite.
+    main-is:          Tests.hs
+
+    -- Test dependencies.
+    build-depends: base >= 4.7 && < 5
+                    , torsor
+                    , tasty
+                    , tasty-hspec
+                    , tasty-quickcheck
+                    , containers
