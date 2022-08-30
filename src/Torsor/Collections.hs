@@ -170,3 +170,17 @@ instance DiffableContainer IM.IntMap ((,) Int) where
 instance (Torsor value diff) => Torsor (IM.IntMap value) (ContainerDiff IM.IntMap ((,) Int) value diff) where
   difference = diffDiffableContainer
   add = moveDiffableContainer
+
+instance DiffableContainer S.Seq Identity where
+  gains new old = foldMap (pure . Identity) $ S.drop (S.length old) new
+  losses new old = foldMap (pure . Identity) $ S.drop (S.length new) old
+  remained = S.zip
+  patchIn v vs = vs S.|> runIdentity v
+  patchOut _ vs = case S.viewr vs of
+    S.EmptyR -> vs
+    inner S.:> _ -> inner
+  zipper = S.zipWith
+
+instance (Torsor value diff) => Torsor (S.Seq value) (ContainerDiff S.Seq Identity value diff) where
+  difference = diffDiffableContainer
+  add = moveDiffableContainer
