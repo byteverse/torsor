@@ -1,4 +1,3 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
 {- | The typeclasses provides in this module are equivalent
@@ -7,11 +6,10 @@
      instead of type families in order to improved error
      messages.
 -}
-
 module Torsor
-  ( Additive(..)
-  , Torsor(..)
-  , Scaling(..)
+  ( Additive (..)
+  , Torsor (..)
+  , Scaling (..)
   ) where
 
 import Data.Int
@@ -23,7 +21,7 @@ class Additive v where
   plus :: v -> v -> v
   minus :: v -> v -> v
 
-class Additive v => Torsor p v | p -> v where
+class (Additive v) => Torsor p v | p -> v where
   add :: v -> p -> p
   difference :: p -> p -> v
 
@@ -172,4 +170,3 @@ instance Torsor Int8 Int8 where
 
 instance Scaling Int8 Int8 where
   scale = (*)
-
