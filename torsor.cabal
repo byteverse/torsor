@@ -16,6 +16,8 @@ extra-doc-files:
   CHANGELOG.md
   README.md
 
+tested-with:     GHC ==9.4.8 || ==9.6.3 || ==9.8.1
+
 common build-settings
   default-language: Haskell2010
   ghc-options:      -Wall -Wunused-packages
